@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat with Ex 😅</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #121212;
+      color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+    }
+
+    h1 {
+      background-color: #ff4d6d;
+      color: white;
+      width: 100%;
+      text-align: center;
+      padding: 1rem 0;
+      margin: 0;
+      font-size: 1.8rem;
+    }
+
+    #chatBox {
+      background-color: #1e1e1e;
+      width: 90%;
+      max-width: 600px;
+      height: 70vh;
+      overflow-y: auto;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-top: 1rem;
+      box-shadow: 0 0 10px rgba(255, 77, 109, 0.2);
+    }
+
+    .message {
+      margin: 0.5rem 0;
+      padding: 0.7rem 1rem;
+      border-radius: 10px;
+      max-width: 80%;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+
+    .user {
+      background-color: #2e7d32;
+      color: white;
+      margin-left: auto;
+      text-align: right;
+    }
+
+    .ex {
+      background-color: #b71c1c;
+      color: white;
+      margin-right: auto;
+      text-align: left;
+    }
+
+    #inputArea {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 90%;
+      max-width: 600px;
+      margin-top: auto;
+      margin-bottom: 1rem;
+    }
+
+    #userInput {
+      width: 70%;
+      padding: 0.8rem;
+      border-radius: 20px;
+      border: none;
+      font-size: 1rem;
+      outline: none;
+      background-color: #2c2c2c;
+      color: white;
+    }
+
+    button {
+      padding: 0.8rem 1.2rem;
+      margin-left: 0.5rem;
+      border: none;
+      border-radius: 20px;
+      background-color: #ff4d6d;
+      color: white;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    button:hover {
+      background-color: #e03e5c;
+    }
+
+    #micBtn {
+      background-color: #4caf50;
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Talk to Your Ex 😅</h1>
+
+  <div id="chatBox"></div>
+
+  <div id="inputArea">
+    <input type="text" id="userInput" placeholder="Type your message..." />
+    <button onclick="sendMessage()">Send</button>
+    <button id="micBtn" onclick="startVoice()">🎙️</button>
+  </div>
+
+  <script>
+    const chatBox = document.getElementById("chatBox");
+    const userInput = document.getElementById("userInput");
+
+    // Load history from localStorage
+    window.onload = () => {
+      const history = JSON.parse(localStorage.getItem("chatHistory")) || [];
+      history.forEach(({ sender, message }) => {
+        displayMessage(sender, message);
+      });
+    };
+
+    function displayMessage(sender, message) {
+      const div = document.createElement("div");
+      div.className = `message ${sender}`;
+      div.innerHTML = `<b>${sender === "user" ? "You" : "Ex"}:</b> ${message}`;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // Save to localStorage
+      const history = JSON.parse(localStorage.getItem("chatHistory")) || [];
+      history.push({ sender, message });
+      localStorage.setItem("chatHistory", JSON.stringify(history));
+    }
+
+    async function sendMessage() {
+      const input = userInput.value.trim();
+      if (!input) return;
+
+      displayMessage("user", input);
+      userInput.value = "";
+
+      try {
+        const response = await fetch("http://localhost:3000/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ message: input }),
+        });
+
+        const data = await response.json();
+        const reply = data.reply + " 😏"; // Add emoji for sarcasm
+        displayMessage("ex", reply);
+      } catch {
+        displayMessage("ex", "Ugh, even your internet can't keep up with me. 🙄");
+      }
+    }
+
+    // Voice Input
+    function startVoice() {
+      if (!('webkitSpeechRecognition' in window)) {
+        alert("Voice recognition not supported.");
+        return;
+      }
+
+      const recognition = new webkitSpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.start();
+
+      recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        userInput.value = transcript;
+        sendMessage();
+      };
+
+      recognition.onerror = function(err) {
+        alert("Mic error: " + err.error);
+      };
+    }
+
+    // Enter key = send
+    userInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") sendMessage();
+    });
+  </script>
+</body>
+</html>
