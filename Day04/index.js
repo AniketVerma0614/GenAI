@@ -155,3 +155,6 @@ async function main() {
 }
 
 main();
+
+// Note: The API key used here is a placeholder and should be replaced with a valid one.
+// Ensure to handle API keys securely and not expose them in public repositories.
